@@ -24,9 +24,11 @@ function Get-FeatureFilePath($structureType, $feature, $layer) {
 
     if ($structureType -eq "layer") {
         return "$layer/$fileName"
-    } elseif ($layer -eq "validation") {
+    }
+    elseif ($layer -eq "validation") {
         return "features/$feature/validation/$fileName"
-    } else {
+    }
+    else {
         return "features/$feature/$fileName"
     }
 }
@@ -34,7 +36,8 @@ function Get-FeatureFilePath($structureType, $feature, $layer) {
 function Get-FeatureCriteriaFilePath($structureType, $feature) {    
     if ($structureType -eq "layer") {
         return "repositories/criteria"
-    } else {
+    }
+    else {
         return "features/$feature/criteria"
     }
 }
@@ -324,13 +327,20 @@ function Initialize-NpmProject($moduleSystem) {
     $packageJson = Get-Content $packagePath -Raw | ConvertFrom-Json
 
     $packageJson.main = "src/app.js"
-    $packageJson.type = if ($moduleSystem -eq "esm") { "module" } else { "commonjs" }
+    
+    $moduleType = if ($moduleSystem -eq "esm") { "module" } else { "commonjs" }
+    if ($packageJson.PSObject.Properties.Name -contains "type") {
+        $packageJson.type = $moduleType
+    }
+    else {
+        $packageJson | Add-Member -MemberType NoteProperty -Name "type" -Value $moduleType
+    }
 
     $packageJson.scripts = @{
         start = "node src/app.js"
         dev   = "nodemon src/app.js"
     }
-    $packageJson | ConvertTo-Json -Depth 3 -Compress | Set-Content $packagePath
+    $packageJson | ConvertTo-Json -Depth 10 -Compress | Set-Content $packagePath
     Write-Host "`nSuccessfully modified package.json" -ForegroundColor $successColor
 
     Write-Host "`n`nRunning npm install express cors dotenv" -ForegroundColor $highlightColor
